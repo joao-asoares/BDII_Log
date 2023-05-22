@@ -45,6 +45,34 @@ def busca_commited(transactions):
 
     file.close
 
+def realiza_mudancas(cur, transactions):
+    vet_undo = []
+    file = open('entradaLog.txt', 'r')
+    linhas = file.readlines()
+    for linha in linhas:
+        linha = linha[1:-2]
+        comando = linha.split()
+
+        if len(comando) != 2:
+            comando = linha.split(',')
+            if(transactions[comando[0]] == 0):
+                cur.execute(f"UPDATE tabela SET {comando[2]} = {comando[4]} where id = {comando[1]}")
+            elif(transactions[comando[0]] == 1):
+                vet_undo.append([comando[1], comando[2], comando[3]])
+        
+    for i in reversed(vet_undo):
+        cur.execute(f"UPDATE tabela SET {i[1]} = {i[2]} where id = {i[0]}")
+
+    file.close
+
+def print_final(cur):
+    cur.execute('SELECT * FROM tabela')
+    rows = cur.fetchall()
+    columns = [desc[0] for desc in cur.description]
+
+    print(columns)
+    for row in rows:
+        print(row)
 
 if __name__ == '__main__':
 
@@ -59,6 +87,15 @@ if __name__ == '__main__':
 
     transactions = {}
     busca_commited(transactions)
+    for i in transactions:
+        if transactions[i] == 1:
+            print(f'TRANSAÇÃO {i} REALIZOU UNDO')
+        elif transactions[i] == 0:
+            print(f'TRANSAÇÃO {i} REALIZOU REDO')
+
+    realiza_mudancas(cur, transactions)
+
+    print_final(cur)
 
     conn.commit()
     cur.close()
