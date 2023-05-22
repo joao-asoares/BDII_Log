@@ -29,6 +29,23 @@ def config_tabela(cur):
     file.close()
 
 
+def busca_commited(transactions):
+    file = open('entradaLog.txt', 'r')
+    linhas = file.readlines()
+    for linha in linhas:
+        linha = linha[1:-2]
+        comando = linha.split()
+        if len(comando) != 2:
+            comando = linha.split(',')
+
+        if comando[0] == 'start':
+            transactions[comando[1]] = 1
+        elif comando[0] == 'commit':
+            transactions[comando[1]] = 0
+
+    file.close
+
+
 if __name__ == '__main__':
 
     conn = psycopg2.connect(
@@ -40,6 +57,8 @@ if __name__ == '__main__':
     cur = conn.cursor()
     config_tabela(cur)
 
+    transactions = {}
+    busca_commited(transactions)
 
     conn.commit()
     cur.close()
